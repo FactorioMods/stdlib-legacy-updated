@@ -1,6 +1,6 @@
 --- For working with mod configurations.
 -- @module Misc.Config
--- @usage require('__stdlib__/stdlib/config/config')
+-- @usage require('__stdlib-legacy-updated__/stdlib/config/config')
 
 ---
 -- @tfield function new
@@ -11,11 +11,11 @@
 -- @table Config
 local M = {
     __class = 'Config',
-    __index = require('__stdlib__/stdlib/core')
+    __index = require('__stdlib-legacy-updated__/stdlib/core')
 }
 setmetatable(M, M)
-local table = require('__stdlib__/stdlib/utils/table')
-local string = require('__stdlib__/stdlib/utils/string')
+local table = require('__stdlib-legacy-updated__/stdlib/utils/table')
+local string = require('__stdlib-legacy-updated__/stdlib/utils/string')
 
 -----------------------------------------------------------------------
 --Setup repeated code for use in sub functions here
@@ -35,30 +35,30 @@ end
 -- @tparam table config_table the config table to manage
 -- @treturn Config the Config object to manage the config table
 --
--- @usage --[Use a global table for config that persists across game save/loads]
--- CONFIG = Config.new(global.testtable)
+-- @usage --[Use a storage table for config that persists across game save/loads]
+-- CONFIG = Config.new(storage.testtable)
 --
 -- @usage --[You can also create a temporary scratch pad config]
 -- CONFIG = Config.new({}) -- Temporary scratch pad
 --
 -- @usage --[Setting data in Config]
--- CONFIG = Config.new(global.testtable)
+-- CONFIG = Config.new(storage.testtable)
 -- CONFIG.set("your.path.here", "myvalue")
 --
 -- @usage --[Getting data out of Config]
--- CONFIG = Config.new(global.testtable)
+-- CONFIG = Config.new(storage.testtable)
 -- my_data = CONFIG.get("your.path.here")
 --
 -- @usage --[Getting data out of Config with a default to use if path is not found in Config]
--- CONFIG = Config.new(global.testtable)
+-- CONFIG = Config.new(storage.testtable)
 -- my_data = CONFIG.get("your.path.here", "Your Default here")
 --
 -- @usage --[Deleting a path from Config]
--- CONFIG = Config.new(global.testtable)
+-- CONFIG = Config.new(storage.testtable)
 -- CONFIG.delete("your.path.here")
 --
 -- @usage --[Checking if a path exists in Config]
--- CONFIG = Config.new(global.testtable)
+-- CONFIG = Config.new(storage.testtable)
 -- CONFIG.is_set("your.path.here")
 function M.new(config_table)
     if not config_table then
@@ -152,7 +152,7 @@ function M.new(config_table)
     -- @tparam string path the config path to delete
     -- @treturn uint 0 on failure or the number of affected paths on success
     function Config.delete(path)
-        if type(path) ~= 'string' or string == '' then
+        if type(path) ~= 'string' or path == '' then
             error('path is invalid', 2)
         end
 

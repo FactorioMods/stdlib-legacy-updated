@@ -1,8 +1,8 @@
 --- Recipe class
 -- @classmod Data.Recipe
 
-local Data = require('__stdlib__/stdlib/data/data')
-local Table = require('__stdlib__/stdlib/utils/table')
+local Data = require('__stdlib-legacy-updated__/stdlib/data/data')
+local Table = require('__stdlib-legacy-updated__/stdlib/utils/table')
 
 local Recipe = {
     __class = 'Recipe',
@@ -19,7 +19,7 @@ setmetatable(Recipe, Recipe)
 
 -- Returns a formated ingredient or prodcut table
 local function format(ingredient, result_count)
-    local Item = require('__stdlib__/stdlib/data/item')
+    local Item = require('__stdlib-legacy-updated__/stdlib/data/item')
     local object
     if type(ingredient) == 'table' then
         if ingredient.valid and ingredient:is_valid() then
@@ -69,7 +69,20 @@ local function remove_ingredient(ingredients, name)
     name = name.name
     for i, ingredient in pairs(ingredients or {}) do
         if ingredient[1] == name or ingredient.name == name then
-            ingredients[i] = nil
+            table.remove(ingredients, i) -- can no longer set ingredient to nil
+            return true
+        end
+    end
+end
+
+--- Remove a result from an results table. (near duplicate of remove_ingredient)
+-- @tparam table results
+-- @tparam string name Name of the result to remove
+local function remove_result(results, name)
+    name = name.name
+    for i, result in pairs(results or {}) do
+        if result[1] == name or result.name == name then
+            table.remove(results, i)
             return true
         end
     end
@@ -229,24 +242,44 @@ function Recipe:make_difficult(expensive_energy)
     return self
 end
 
---- Change the recipe category.
--- @tparam string category_name The new crafting category
+--- Change the recipe categories.
+-- @tparam string|table category_names The new crafting category or categories
 -- @treturn self
-function Recipe:change_category(category_name)
-    if self:is_valid() then
-        local Category = require('__stdlib__/stdlib/data/category')
-        self.category = Category(category_name, 'recipe-category'):is_valid() and category_name or self.category
+function Recipe:change_category(category_names)
+    if not self:is_valid() then
+        return self
+    end
+
+    if type(category_names) == 'string' then
+        category_names = {category_names}
+    end
+    if type(category_names) ~= 'table' or #category_names == 0 then
+        return self
+    end
+
+    local Category = require('__stdlib-legacy-updated__/stdlib/data/category')
+    local valid_categories = {}
+    for _, category_name in ipairs(category_names) do
+        if Category(category_name, 'recipe-category'):is_valid() then
+            valid_categories[#valid_categories + 1] = category_name
+        end
+    end
+
+    if #valid_categories == #category_names then
+        self.categories = valid_categories
+        self.category = nil
     end
     return self
 end
 Recipe.set_category = Recipe.change_category
+Recipe.set_categories = Recipe.change_category
 
 --- Add to technology as a recipe unlock.
 -- @tparam string tech_name Name of the technology to add the unlock too
 -- @treturn self
 function Recipe:add_unlock(tech_name)
     if self:is_valid() then
-        local Tech = require('__stdlib__/stdlib/data/technology')
+        local Tech = require('__stdlib-legacy-updated__/stdlib/data/technology')
         Tech.add_effect(self, tech_name) --self is passed as a valid recipe
     end
     return self
@@ -257,7 +290,7 @@ end
 -- @treturn self
 function Recipe:remove_unlock(tech_name)
     if self:is_valid('recipe') then
-        local Tech = require('__stdlib__/stdlib/data/technology')
+        local Tech = require('__stdlib-legacy-updated__/stdlib/data/technology')
         Tech.remove_effect(self, tech_name, 'unlock-recipe')
     end
     return self
@@ -318,7 +351,7 @@ function Recipe:set_main_product(main_product, normal, expensive)
         normal, expensive = get_difficulties(normal, expensive)
         local normal_main, expensive_main
         if main_product then
-            local Item = require('__stdlib__/stdlib/data/item')
+            local Item = require('__stdlib-legacy-updated__/stdlib/data/item')
             if type(main_product) == 'string' and Item(main_product):is_valid() then
                 normal_main = normal and main_product
                 expensive_main = expensive and main_product
@@ -360,19 +393,15 @@ end
 -- @tparam string|Concepts.product normal
 -- @tparam[opt] string|Concepts.product|boolean expensive
 -- @tparam[opt] string main_product
-function Recipe:add_result(normal, expensive, main_product)
+function Recipe:add_result(result_name, expensive, main_product)
     if self:is_valid() then
-        normal, expensive = get_difficulties(normal, expensive)
-        self:convert_results()
-        self:set_main_product(main_product, normal, expensive)
-
-        -- if self.normal then
-        --     if normal then
-        --     end
-        --     if expensive then
-        --     end
-        -- elseif normal then
-        -- end
+        if self.results then
+            result_name = format(result_name)
+            table.insert(self.results,result_name)
+            if main_product then
+                self.main_product = main_product
+            end
+        end
     end
     return self
 end
@@ -381,44 +410,32 @@ end
 -- @tparam[opt] string|Concepts.product normal
 -- @tparam[opt] string|Concepts.product|boolean expensive
 -- @tparam[opt] string main_product new main_product to use
-function Recipe:remove_result(normal, expensive, main_product)
+function Recipe:remove_result(result_name, expensive, main_product)
     if self:is_valid() then
-        normal, expensive = get_difficulties(normal, expensive)
-        self:convert_results()
-        self:set_main_product(main_product, normal, expensive)
-
-        -- if self.normal then
-        --     if normal then
-        --     end
-        --     if expensive then
-        --     end
-        -- elseif normal then
-        -- end
+        if self.results then
+            remove_result(self.results,result_name)
+            if main_product then
+                self.main_product = main_product
+            end
+        end
     end
     return self
 end
 
 --- Remove a product from results, converts if needed.
--- @tparam string|Concepts.product result_name
--- @tparam[opt] string|Concepts.product normal
+-- @tparam string|Concepts.product replace_name the result to be replaced
+-- @tparam[opt] string|Concepts.product new_result the new result to be added
 -- @tparam[opt] string|Concepts.product|boolean expensive
 -- @tparam[opt] string main_product
-function Recipe:replace_result(result_name, normal, expensive, main_product)
-    if self:is_valid() and normal or expensive then
-        result_name = format(result_name)
-        if result_name then
-            normal, expensive = get_difficulties(normal, expensive)
-            self:convert_results()
-            self:remove_result(result_name, expensive and result_name)
-            self:set_main_product(main_product, normal, expensive)
-
-            -- if self.normal then
-            --     if normal then
-            --     end
-            --     if expensive then
-            --     end
-            -- elseif normal then
-            -- end
+function Recipe:replace_result(replace_name, new_result, expensive, main_product)
+    if self:is_valid() then
+        new_result = format(new_result)
+        if new_result then
+            self:remove_result(replace_name)
+            self:add_result(new_result)
+            if main_product then
+                self.main_product = main_product
+            end
         end
     end
     return self

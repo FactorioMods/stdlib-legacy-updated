@@ -1,21 +1,21 @@
 --- Data
 -- @classmod Data
 
-require('__stdlib__/stdlib/core') -- Calling core up here to setup any required global stuffs
+require('__stdlib-legacy-updated__/stdlib/core') -- Calling core up here to setup any required global stuffs
 
 if _G.remote and _G.script then
     error('Data Modules can only be required in the data stage', 2)
 end
 
-local Table = require('__stdlib__/stdlib/utils/table')
-local groups = require('__stdlib__/stdlib/data/modules/groups')
+local Table = require('__stdlib-legacy-updated__/stdlib/utils/table')
+local groups = require('__stdlib-legacy-updated__/stdlib/data/modules/groups')
 
 local Data = {
     __class = 'Data',
-    __index = require('__stdlib__/stdlib/core'),
-    Sprites = require('__stdlib__/stdlib/data/modules/sprites'),
-    Pipes = require('__stdlib__/stdlib/data/modules/pipes'),
-    Util = require('__stdlib__/stdlib/data/modules/util'),
+    __index = require('__stdlib-legacy-updated__/stdlib/core'),
+    Sprites = require('__stdlib-legacy-updated__/stdlib/data/modules/sprites'),
+    Pipes = require('__stdlib-legacy-updated__/stdlib/data/modules/pipes'),
+    Util = require('__stdlib-legacy-updated__/stdlib/data/modules/util'),
     _default_options = {
         ['silent'] = false, -- Don't log if not present
         ['fail'] = false, -- Error instead of logging
@@ -176,16 +176,12 @@ function Data:copy(new_name, result, opts)
             copy.placeable_by.item = result
         end
 
-        -- For recipes, should also to check results!!
-        if copy.type == 'recipe' then
-            if copy.normal and copy.normal.result then
-                copy.normal.result = new_name
-                copy.expensive.result = new_name
-            else
-                if copy.result then
-                    copy.result = new_name
-                end
-            end
+        -- For recipes, "result" is no longer in use
+        if copy.type == 'recipe' and copy.results then
+            -- recipes with more than 1 result are too ambiguous to replace
+            if #copy.results == 1 then 
+                copy.results[1].name = result
+			end
         end
 
         return self(copy, nil, opts or self.options)

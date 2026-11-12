@@ -1,22 +1,27 @@
 {
-  "name": "stdlib",
-  "version": "1.4.9",
-  "factorio_version": "1.1",
-  "title": "Factorio Standard Library",
-  "author": "Afforess",
-  "contact": "",
+  "name": "stdlib-legacy-updated",
+  "version": "2.1.2",
+  "factorio_version": "2.1",
+  "title": "Factorio Standard Library: Legacy Updated",
+  "author": "Afforess, Jackie P. Mueller, Goakiller900; johnmart19 / FactorioMods (legacy-state port)",
+  "contact": "https://github.com/goakiller900/stdlib2/issues",
   "dependencies": [
-    "base >= 1.1.0"
+    "base >= 2.1.24",
+    "! stdlib"
   ],
-  "homepage": "https://github.com/Afforess/Factorio-Stdlib",
-  "description": "The Factorio Standard Library is a project to bring Factorio modders high-quality, commonly-required utilities and tools.",
+  "homepage": "https://github.com/goakiller900/stdlib2",
+  "description": "Factorio Standard Library for legacy consumers on Factorio 2.1, including current LuaObject validation, entity protection and event invalidation handling.",
   "package": {
     "ignore": [
       "wiki/**",
       "spec/**",
       "tools/**",
       "doc/**",
-      "faketorio/**"
+      "faketorio/**",
+      ".publish/**"
     ]
-  }
+  },
+  "migrates_from": [
+    "stdlib"
+  ]
 }

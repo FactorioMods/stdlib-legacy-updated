@@ -1,7 +1,45 @@
 ---------------------------------------------------------------------------------------------------
-Version: 1.4.9
-Date: ????
+Version: 2.1.2
+Date: 2026-11-12
   Changes:
+    - Retain the continued standard-library implementation and module layout under an independent Factorio 2.1 namespace.
+    - Update LuaObject resolution, entity freezing and protection, and event invalidation handling for current APIs.
+  Testing:
+    - Native assertions passed for freeze/unfreeze, mining and damage protection, userdata player/force/surface resolution and event invalidation.
+---------------------------------------------------------------------------------------------------
+Version: 2.1.1
+Date: 2026-07-12
+  Bugfixes:
+    - Migrated script-output helpers from removed game methods to the Factorio 2.1 helpers API.
+    - Updated diagnostic storage dumps from the removed global table to storage.
+    - Updated statistics exports to use the Factorio 2.1 per-surface statistics methods.
+---------------------------------------------------------------------------------------------------
+---------------------------------------------------------------------------------------------------
+Version: 2.1.0
+Date: 2026-07-12
+  Changes:
+    - Renamed the mod to stdlib2-continued for a new community-maintained Mod Portal release.
+    - Updated the minimum supported Factorio version to 2.1.
+    - Rewrote all cross-mod import paths for the new internal mod name.
+  Bugfixes:
+    - Updated Recipe:change_category to use the Factorio 2.1 categories array.
+    - Updated LuaObject detection for userdata-based Factorio objects.
+    - Made recipe copying tolerate recipes without a results table.
+---------------------------------------------------------------------------------------------------
+Version: 2.0.2
+Date: 2024-00-00
+  Info:
+    - To be added...
+---------------------------------------------------------------------------------------------------
+Version: 2.0.1
+Date: 2024-10-29
+  Changes:
+    - Removed unnecessary folders from the public release.
+---------------------------------------------------------------------------------------------------
+Version: 2.0.0
+Date: 2024-10-29
+  Changes:
+    - Factorio 2.0 compatible
 ---------------------------------------------------------------------------------------------------
 Version: 1.4.8
 Date: 2022-11-27

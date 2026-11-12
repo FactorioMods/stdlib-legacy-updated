@@ -1,10 +1,10 @@
 --- The game module.
 -- @module Game
--- @usage local Game = require('__stdlib__/stdlib/game')
+-- @usage local Game = require('__stdlib-legacy-updated__/stdlib/game')
 
 local Game = {
     __class = 'Game',
-    __index = require('__stdlib__/stdlib/core')
+    __index = require('__stdlib-legacy-updated__/stdlib/core')
 }
 setmetatable(Game, Game)
 local inspect = _ENV.inspect
@@ -13,6 +13,7 @@ local inspect = _ENV.inspect
 -- @tparam string|number|LuaPlayer|event mixed
 -- @treturn LuaPlayer a valid player or nil
 function Game.get_player(mixed)
+    if type(mixed)=='userdata' then return mixed.valid and mixed end
     if type(mixed) == 'table' then
         if mixed.player_index then
             return game.get_player(mixed.player_index)
@@ -28,6 +29,7 @@ end
 -- @tparam string|LuaForce|event mixed
 -- @treturn LuaForce a valid force or nil
 function Game.get_force(mixed)
+    if type(mixed)=='userdata' then return mixed.valid and mixed end
     if type(mixed) == 'table' then
         if mixed.__self then
             return mixed and mixed.valid and mixed
@@ -41,6 +43,7 @@ function Game.get_force(mixed)
 end
 
 function Game.get_surface(mixed)
+    if type(mixed)=='userdata' then return mixed.valid and mixed end
     if type(mixed) == 'table' then
         if mixed.__self then
             return mixed.valid and mixed
@@ -55,7 +58,7 @@ end
 
 --- Messages all players currently connected to the game.
 --> Offline players are not counted as having received the message.
--- If no players exist msg is stored in the `global._print_queue` table.
+-- If no players exist msg is stored in the `storage._print_queue` table.
 -- @tparam string msg the message to send to players
 -- @tparam[opt] ?|nil|boolean condition the condition to be true for a player to be messaged
 -- @treturn uint the number of players who received the message.
@@ -70,12 +73,12 @@ function Game.print_all(msg, condition)
         end
         return num
     else
-        global._print_queue = global._print_queue or {}
-        global._print_queue[#global._print_queue + 1] = msg
+        storage._print_queue = storage._print_queue or {}
+        storage._print_queue[#storage._print_queue + 1] = msg
     end
 end
 
---- Gets or sets data in the global variable.
+--- Gets or sets data in the storage variable.
 -- @tparam string sub_table the name of the table to use to store data.
 -- @tparam[opt] mixed index an optional index to use for the sub_table
 -- @tparam mixed key the key to store the data in
@@ -84,13 +87,13 @@ end
 -- @treturn mixed the chunk value stored at the key or the previous value
 function Game.get_or_set_data(sub_table, index, key, set, value)
     assert(type(sub_table) == 'string', 'sub_table must be a string')
-    global[sub_table] = global[sub_table] or {}
+    storage[sub_table] = storage[sub_table] or {}
     local this
     if index then
-        global[sub_table][index] = global[sub_table][index] or {}
-        this = global[sub_table][index]
+        storage[sub_table][index] = storage[sub_table][index] or {}
+        this = storage[sub_table][index]
     else
-        this = global[sub_table]
+        this = storage[sub_table]
     end
     local previous
 
@@ -106,27 +109,44 @@ function Game.get_or_set_data(sub_table, index, key, set, value)
 end
 
 function Game.write_mods()
-    game.write_file('Mods.lua', 'return ' .. inspect(game.active_mods))
+    helpers.write_file('Mods.lua', 'return ' .. inspect(script.active_mods))
 end
 
 function Game.write_statistics()
     local pre = 'Statistics/' .. game.tick .. '/'
-    for _, force in pairs(game.forces) do
-        local folder = pre .. force.name .. '/'
-        for _, count_type in pairs { 'input_counts', 'output_counts' } do
-            game.write_file(folder .. 'pollution-' .. count_type .. '.json', game.table_to_json(game.pollution_statistics[count_type]))
-            game.write_file(folder .. 'item-' .. count_type .. '.json', game.table_to_json(force.item_production_statistics[count_type]))
-            game.write_file(folder .. 'fluid-' .. count_type .. '.json', game.table_to_json(force.fluid_production_statistics[count_type]))
-            game.write_file(folder .. 'kill-' .. count_type .. '.json', game.table_to_json(force.kill_count_statistics[count_type]))
-            game.write_file(folder .. 'build-' .. count_type .. '.json', game.table_to_json(force.entity_build_count_statistics[count_type]))
+    for _, surface in pairs(game.surfaces) do
+        local pollution = game.get_pollution_statistics(surface)
+        for _, count_type in pairs {'input_counts', 'output_counts'} do
+            helpers.write_file(
+                pre .. surface.name .. '/pollution-' .. count_type .. '.json',
+                helpers.table_to_json(pollution[count_type])
+            )
+        end
+
+        for _, force in pairs(game.forces) do
+            local folder = pre .. surface.name .. '/' .. force.name .. '/'
+            local statistics = {
+                item = force.get_item_production_statistics(surface),
+                fluid = force.get_fluid_production_statistics(surface),
+                kill = force.get_kill_count_statistics(surface),
+                build = force.get_entity_build_count_statistics(surface)
+            }
+            for name, flow in pairs(statistics) do
+                for _, count_type in pairs {'input_counts', 'output_counts'} do
+                    helpers.write_file(
+                        folder .. name .. '-' .. count_type .. '.json',
+                        helpers.table_to_json(flow[count_type])
+                    )
+                end
+            end
         end
     end
 end
 
 function Game.write_surfaces()
-    game.remove_path('surfaces')
+    helpers.remove_path('surfaces')
     for _, surface in pairs(game.surfaces) do
-        game.write_file('surfaces/' .. (surface.name or surface.index) .. '.lua', 'return ' .. inspect(surface.map_gen_settings))
+        helpers.write_file('surfaces/' .. (surface.name or surface.index) .. '.lua', 'return ' .. inspect(surface.map_gen_settings))
     end
 end
 
